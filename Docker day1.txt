@@ -794,6 +794,260 @@ The next useful command is docker exec, because that's how you'll enter a runnin
 
 Real time example of using the docker
 
+
+
+Yes. Since you already have the JAR file of your Java application, this is the perfect next Docker exercise.
+
+We'll do it in the simplest possible way:
+
+Your Java JAR
+     ↓
+Dockerfile
+     ↓
+Docker Image
+     ↓
+Docker Container
+     ↓
+Spring Boot application
+1. Create a folder
+
+For example:
+
+C:\docker\search-pg
+
+Put your JAR inside it:
+
+C:\docker\search-pg
+│
+├── search-pg.jar
+└── Dockerfile
+
+You can use your actual JAR filename instead of search-pg.jar.
+
+2. Create a Dockerfile
+
+Inside the same folder, create a file named exactly:
+
+Dockerfile
+
+No .txt extension.
+
+Put this inside:
+
+FROM eclipse-temurin:17-jre
+
+
+WORKDIR /app
+
+
+COPY search-pg.jar app.jar
+
+
+EXPOSE 8080
+
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+What each line means
+FROM
+FROM eclipse-temurin:26-jre
+
+This tells Docker:
+
+Start with a Java 26 runtime image.
+
+If your application uses Java 8, 11, 17, 21, etc., we should use the corresponding runtime.
+
+You can check your application's Java version with:
+
+java -version
+
+If your JAR was built with Java 17, the above is appropriate.
+
+WORKDIR
+WORKDIR /app
+
+Creates/uses /app as the working directory inside the container.
+
+So inside the container we'll have:
+
+/app
+   └── app.jar
+COPY
+COPY search-pg.jar app.jar
+
+Copies your JAR from your Windows folder into the Docker image.
+
+Windows
+search-pg.jar
+     ↓
+Docker Image
+/app/app.jar
+EXPOSE
+EXPOSE 8080
+
+This documents that the application uses port 8080.
+
+Important: EXPOSE by itself does not make the application accessible from your Windows machine. We'll map the port when running the container.
+
+ENTRYPOINT
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+This tells Docker what to execute when the container starts.
+
+It's essentially:
+
+java -jar app.jar
+
+inside the container.
+
+3. Build the Docker image
+
+Open CMD in your project folder:
+
+cd C:\docker\search-pg
+
+Then:
+
+docker build -t search-pg:1.0 .
+
+The . at the end is important.
+
+It means:
+
+Use the current folder as the build context.
+
+After successful build:
+
+docker images
+
+You should see something like:
+
+REPOSITORY   TAG    IMAGE ID
+search-pg    1.0    xxxxxxxx
+
+You have now converted:
+
+search-pg.jar
+      ↓
+Docker image
+search-pg:1.0
+4. Run your application
+
+Now:
+
+docker run -p 8080:8085 search-pg:1.0
+
+The mapping:
+
+-p 8080:8080
+   ↑      ↑
+   │      └── Container port
+   └───────── Windows host port
+
+So:
+
+Windows
+localhost:8080
+      ↓
+Docker
+      ↓
+Container
+      ↓
+Java application
+      ↓
+8080
+
+If your Spring Boot application starts successfully, you'll see its normal startup logs.
+
+For example:
+
+Started SearchPgApplication in 4.123 seconds
+5. Check the container
+
+Open another CMD window:
+
+docker ps
+
+You should see:
+
+CONTAINER ID   IMAGE          STATUS          PORTS
+abc123         search-pg:1.0  Up 20 seconds   0.0.0.0:8080->8080/tcp
+
+This means your Java application is running inside Docker. 🎉
+
+6. Test your API
+
+If your application has an endpoint such as:
+
+GET /search
+
+you can access:
+
+http://localhost:8080/search
+
+Or test it using Postman.
+
+One important thing about your "search PG" application
+
+I'm assuming PG means PostgreSQL.
+
+If your Java application connects to PostgreSQL, there is one additional issue.
+
+For example, your application might currently have:
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/searchdb
+spring.datasource.username=postgres
+spring.datasource.password=password
+
+⚠️ This will usually not work as-is inside Docker.
+
+Why?
+
+Inside a Docker container:
+
+localhost
+
+means the Java container itself, not your Windows machine and not another PostgreSQL container.
+
+Eventually we'll change this to something like:
+
+spring.datasource.url=jdbc:postgresql://postgres:5432/searchdb
+
+and run:
+
+┌───────────────────────────────┐
+│ Docker                        │
+│                               │
+│  ┌─────────────┐              │
+│  │ Spring Boot │              │
+│  │ Container   │              │
+│  └──────┬──────┘              │
+│         │                     │
+│         │ postgres:5432       │
+│         ↓                     │
+│  ┌─────────────┐              │
+│  │ PostgreSQL  │              │
+│  │ Container   │              │
+│  └─────────────┘              │
+│                               │
+└───────────────────────────────┘
+
+We'll use Docker Compose for that, which is the proper next step for a Java backend application with PostgreSQL.
+
+Before we do that
+
+Tell me which Java version your JAR uses.
+
+Run:
+
+java -version
+
+and also tell me the actual JAR filename. Then I can give you the exact Dockerfile and commands for your application.
+
+
+
+
+
 Microsoft Windows [Version 10.0.19045.6456]
 (c) Microsoft Corporation. All rights reserved.
 
