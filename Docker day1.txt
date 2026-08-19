@@ -266,11 +266,6 @@ This is where Docker becomes very useful for a Java backend developer.
 
 
 
-What you should learn first
-
-I would modify your original Docker roadmap for you.
-
-Day 1 — Docker fundamentals
 
 Learn:
 
