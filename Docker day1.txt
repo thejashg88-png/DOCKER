@@ -288,3 +288,502 @@ docker run hello-world
 and perhaps:
 
 docker run redis
+
+
+
+
+
+
+Docker Day 1 — Core Concepts & Commands
+
+First remember this simple relationship:
+
+Docker Hub
+    ↓
+  Image
+    ↓
+Container
+    ↓
+Your application runs
+1. Docker Image
+Definition
+
+A Docker image is a packaged/template version of an application that contains everything needed to create a container.
+
+For example, imagine you have a Spring Boot application:
+
+Spring Boot Application
+        +
+Java Runtime
+        +
+Application JAR
+        +
+Configuration
+        ↓
+     Docker Image
+
+You can think of an image as a blueprint.
+
+It doesn't normally "run" by itself. A container is created from it.
+
+Example
+docker images
+
+This displays the images available on your computer.
+
+You might see:
+
+REPOSITORY    TAG       IMAGE ID       SIZE
+hello-world   latest    4f55086f7dd0   10kB
+2. Container
+Definition
+
+A container is a running or stopped instance created from a Docker image.
+
+Think:
+
+Image = Blueprint
+Container = Actual running instance
+
+For Java:
+
+springboot-image
+       ↓
+   Container
+       ↓
+Spring Boot application
+
+You can create multiple containers from the same image:
+
+        Spring Boot Image
+          /          \
+         ↓            ↓
+    Container 1   Container 2
+
+For example:
+
+my-spring-app:1.0
+       ↓
+   Container A
+       ↓
+localhost:8080
+
+and:
+
+my-spring-app:1.0
+       ↓
+   Container B
+       ↓
+localhost:8081
+
+Both containers can come from the same image.
+
+3. Docker Hub
+Definition
+
+Docker Hub is a public registry where Docker images are stored and shared.
+
+Think of it somewhat like a central repository for Docker images.
+
+For example, Docker Hub contains images for:
+
+Ubuntu
+PostgreSQL
+MySQL
+Redis
+Nginx
+Java
+Node
+
+When you ran:
+
+docker run hello-world
+
+Docker didn't find hello-world locally.
+
+So it did:
+
+Your Computer
+     ↓
+"Do I have hello-world?"
+     ↓
+     No
+     ↓
+Docker Hub
+     ↓
+Download hello-world image
+     ↓
+Create container
+
+That's why you saw:
+
+Unable to find image 'hello-world:latest' locally
+
+Then:
+
+Pulling from library/hello-world
+4. docker run
+Definition
+
+docker run creates a new container from an image and starts it.
+
+Syntax:
+
+docker run IMAGE_NAME
+
+Example:
+
+docker run hello-world
+
+Docker essentially does:
+
+Find image
+    ↓
+If not available locally → download it
+    ↓
+Create container
+    ↓
+Start container
+Java example
+
+Later, suppose you create:
+
+my-spring-app:1.0
+
+You could run:
+
+docker run my-spring-app:1.0
+
+Your Spring Boot application would start inside the container.
+
+5. docker ps
+Definition
+
+docker ps shows currently running containers.
+
+Run:
+
+docker ps
+
+Example:
+
+CONTAINER ID   IMAGE          STATUS        PORTS
+abc123         my-spring-app  Up 2 minutes  0.0.0.0:8080->8080/tcp
+
+Important information:
+
+Column	Meaning
+CONTAINER ID	Unique ID of container
+IMAGE	Image used to create it
+STATUS	Whether it is running
+PORTS	Port mappings
+NAMES	Container name
+Important
+
+docker ps shows only running containers.
+
+If you want running + stopped containers:
+
+docker ps -a
+
+Your hello-world container will probably appear there because it finished execution.
+
+6. docker stop
+Definition
+
+docker stop stops a running container.
+
+Syntax:
+
+docker stop CONTAINER_ID
+
+For example:
+
+docker stop abc123
+
+Or if you give the container a name:
+
+docker stop my-spring-app
+Java example
+
+Suppose your Spring Boot application is running:
+
+Spring Boot
+     ↓
+Container
+     ↓
+Port 8080
+
+You run:
+
+docker stop my-spring-app
+
+The application stops.
+
+The image is not deleted.
+
+The container is stopped, but it still exists.
+
+You can see it with:
+
+docker ps -a
+Very Important Difference
+
+This is the part I want you to remember as a Java developer:
+
+IMAGE
+  │
+  │ docker run
+  ↓
+CONTAINER
+  │
+  │ application starts
+  ↓
+RUNNING CONTAINER
+  │
+  │ docker stop
+  ↓
+STOPPED CONTAINER
+
+The image remains.
+
+For example:
+
+Image
+my-spring-app:1.0
+       │
+       ├──── Container A → stopped
+       │
+       └──── Container B → running
+The 6 Things to Remember
+Concept / Command	Simple meaning
+Image	Blueprint/package for your application
+Container	Instance created from an image
+Docker Hub	Online registry for Docker images
+docker run	Create + start a container
+docker ps	Show running containers
+docker stop	Stop a running container
+The most important mental model
+
+If you're coming from Java:
+
+Docker Image ≈ packaged application template
+Container ≈ running instance
+Docker Hub ≈ remote image registry
+
+And the basic commands:
+
+docker images       :: What images do I have?
+docker run          :: Create and start a container
+docker ps           :: What containers are running?
+docker ps -a        :: What containers exist?
+docker stop         :: Stop a container
+
+One correction to that last analogy: an image is not exactly the same as a JAR. A JAR is an application artifact, while a Docker image can contain the application 
+plus its runtime and OS-level filesystem/dependencies. This distinction will become very important when we create your first Spring Boot Docker image.
+
+
+docker rm
+Definition
+
+docker rm removes/deletes a Docker container.
+
+docker rm CONTAINER_ID
+
+For example:
+
+docker rm abc123
+
+This removes the container with ID abc123.
+
+Important distinction
+
+docker rm removes a container, NOT an image.
+
+Image
+  ↓ docker run
+Container
+  ↓ docker rm
+Container deleted
+
+The image is still there.
+
+Example with your hello-world
+
+You can see your container:
+
+docker ps -a
+
+You might see:
+
+CONTAINER ID   IMAGE         STATUS
+abc123         hello-world   Exited (0)
+
+Remove it:
+
+docker rm abc123
+
+Then:
+
+docker ps -a
+
+The container will be gone.
+
+But:
+
+docker images
+
+will still show:
+
+hello-world
+
+because the image wasn't deleted.
+
+What if the container is running?
+
+Normally:
+
+docker rm abc123
+
+will not remove a running container.
+
+You should first:
+
+docker stop abc123
+docker rm abc123
+
+There is also:
+
+docker rm -f abc123
+
+which force-removes a running container.
+
+For now, as a beginner, prefer:
+
+docker stop
+docker rm
+2. docker pull
+Definition
+
+docker pull downloads a Docker image from a registry, usually Docker Hub, to your local computer.
+
+Syntax:
+
+docker pull IMAGE_NAME
+
+Example:
+
+docker pull nginx
+
+Docker will download the nginx image.
+
+You can then check:
+
+docker images
+
+You might see:
+
+REPOSITORY   TAG       IMAGE ID
+nginx        latest    xxxxxxxx
+What happens?
+Docker Hub
+    │
+    │ docker pull nginx
+    ↓
+Your Computer
+    │
+    ↓
+nginx Image
+
+Important: docker pull only downloads the image. It does not create or start a container.
+
+docker pull vs docker run
+
+This is very important.
+
+docker pull
+docker pull nginx
+
+Means:
+
+"Download the nginx image to my computer."
+
+Nothing is running yet.
+
+docker run
+docker run nginx
+
+Means:
+
+"Give me a container created from the nginx image and start it."
+
+If the image doesn't exist locally, docker run will generally pull it automatically first.
+
+So:
+
+docker run nginx
+
+can effectively result in:
+
+Is nginx image local?
+       ↓
+      No
+       ↓
+Pull image
+       ↓
+Create container
+       ↓
+Start container
+docker rm vs docker rmi
+
+You'll encounter another command soon:
+
+docker rmi
+
+Don't confuse them:
+
+Command	Removes
+docker rm	🟦 Container
+docker rmi	🟩 Image
+docker stop	Stops container
+docker pull	Downloads image
+docker run	Creates + starts container
+
+Think of it this way:
+
+              IMAGE
+                │
+          docker pull
+                ↑
+            Docker Hub
+                │
+                │ docker run
+                ↓
+            CONTAINER
+                │
+          docker stop
+                ↓
+        STOPPED CONTAINER
+                │
+           docker rm
+                ↓
+        CONTAINER DELETED
+One-line memory trick
+
+pull = bring image in
+
+rm = remove container
+
+rmi = remove image
+
+For your Docker Day 1, these are the core commands you've now covered:
+
+docker images
+docker pull
+docker run
+docker ps
+docker ps -a
+docker stop
+docker rm
+
+The next useful command is docker exec, because that's how you'll enter a running container and inspect what is happening inside it.
