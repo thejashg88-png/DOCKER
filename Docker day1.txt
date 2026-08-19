@@ -1,0 +1,295 @@
+Docker Day 1 
+
+Your mental model should be:
+
+Java/Spring Boot Application
+          ↓
+       JAR file
+          ↓
+     Docker Image
+          ↓
+      Container
+          ↓
+     Running API
+	 
+	 
+1. Why does a Java developer need Docker?
+
+Normally, to run a Spring Boot application, your machine needs things like:
+
+Java 17/21
+Maven/Gradle
+Application dependencies
+PostgreSQL/MySQL
+Redis
+Kafka
+Environment variables
+
+For example:
+
+java -jar myapp.jar
+
+But your colleague might have Java 17 while you have Java 21.
+
+Or your application might require PostgreSQL, but they don't have PostgreSQL installed.
+
+Docker solves much of this environment problem.
+
+Instead of:
+
+Developer machine
+ ├── Java
+ ├── Maven
+ ├── PostgreSQL
+ ├── Redis
+ └── Application
+
+you can eventually have:
+
+Docker
+ ├── Java/Spring Boot container
+ ├── PostgreSQL container
+ └── Redis container
+ 
+ 
+ 
+2. Image vs Container — Java analogy
+
+This is the most important concept.
+
+Think of a Docker image like a packaged Java application environment.
+
+Docker Image
+   │
+   ├── JRE/JDK
+   ├── Application JAR
+   ├── Libraries
+   └── Configuration
+
+Then:
+
+Docker Image
+      ↓
+Docker Container
+      ↓
+Spring Boot application running
+
+A useful analogy is:
+
+Java
+Class       → Object
+
+
+Docker
+Image       → Container
+
+
+
+3. Let's use a Spring Boot example
+
+Suppose your project produces:
+
+target/
+   └── payment-service.jar
+
+Normally you run:
+
+java -jar target/payment-service.jar
+
+With Docker, eventually you'll be able to do:
+
+docker run payment-service
+
+And Docker will run your Spring Boot application inside a container.
+
+
+
+
+4. Your first Docker command
+
+You should still start with:
+
+docker run hello-world
+
+This isn't a Java application. It's simply a test to verify that Docker works.
+
+Understand the flow:
+
+docker run hello-world
+          ↓
+Docker looks for hello-world image
+          ↓
+If unavailable locally
+          ↓
+Pull image from Docker Hub
+          ↓
+Create container
+          ↓
+Start container
+          ↓
+Print message
+          ↓
+Container exits
+
+
+
+
+5. Now think about Java
+
+Suppose Docker has a Java image:
+
+eclipse-temurin:21
+
+This provides a Java 21 runtime environment.
+
+You could conceptually have:
+
+eclipse-temurin:21
+          ↓
+       Container
+          ↓
+      Java 21
+
+Docker Hub has images for many Java versions.
+
+For example, you may encounter:
+
+eclipse-temurin:17
+eclipse-temurin:21
+
+The important thing isn't memorizing the names yet.
+
+Understand:
+
+A Docker image can provide the Java runtime your application needs.
+
+
+
+
+
+6. Java application without Docker
+
+Imagine your Spring Boot application:
+
+PaymentService
+      │
+      ├── Java 21
+      ├── Spring Boot
+      ├── Maven dependencies
+      └── payment-service.jar
+
+You run:
+
+java -jar payment-service.jar
+
+Your machine must have a compatible Java runtime.
+
+
+
+7. Java application with Docker
+
+Eventually you'll create a Dockerfile:
+
+FROM eclipse-temurin:21-jre
+
+
+COPY target/payment-service.jar app.jar
+
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+This tells Docker:
+
+FROM
+ ↓
+Use Java 21
+
+
+COPY
+ ↓
+Put my JAR inside the image
+
+
+ENTRYPOINT
+ ↓
+Run the JAR
+
+Then:
+
+docker build -t payment-service .
+
+creates:
+
+payment-service image
+
+Then:
+
+docker run payment-service
+
+creates a container:
+
+payment-service image
+          ↓
+     container
+          ↓
+java -jar app.jar
+
+Don't worry about Dockerfiles deeply today. That's Day 3.
+
+
+
+8. The part that's especially important for backend developers
+
+Your real Docker environment will probably look more like this:
+
+                    Docker
+                      │
+        ┌─────────────┼─────────────┐
+        ↓             ↓             ↓
+   Spring Boot    PostgreSQL      Redis
+    Container      Container     Container
+        │             │             │
+        └─────────────┼─────────────┘
+                      │
+                  Docker Network
+
+And later you might have:
+
+Spring Boot
+    │
+    ├── PostgreSQL
+    ├── Redis
+    ├── Kafka
+    └── Keycloak
+
+This is where Docker becomes very useful for a Java backend developer.
+
+
+
+What you should learn first
+
+I would modify your original Docker roadmap for you.
+
+Day 1 — Docker fundamentals
+
+Learn:
+
+What Docker is
+Image
+Container
+Docker Hub
+docker run
+docker ps
+docker ps -a
+docker images
+docker stop
+docker rm
+docker pull
+
+Practice with:
+
+docker run hello-world
+
+and perhaps:
+
+docker run redis
